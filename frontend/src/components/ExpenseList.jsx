@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ConfirmModal from './ConfirmModal'; // 1. Nhúng Modal siêu phẩm vừa chế tạo
 
-export default function ExpenseList({ refreshTrigger, month, year, onDeleteSuccess }) {
+export default function ExpenseList({ refreshTrigger, month, year, startDay, onDeleteSuccess, onEditRequest }) {
   const [expenses, setExpenses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -13,7 +13,7 @@ export default function ExpenseList({ refreshTrigger, month, year, onDeleteSucce
   useEffect(() => {
     const fetchExpenses = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/expenses/filter?month=${month}&year=${year}`);
+        const response = await fetch(`http://localhost:8080/expenses/filter?month=${month}&year=${year}&startDay=${startDay}`);
         const result = await response.json();
         
         if (result.success) {
@@ -27,7 +27,7 @@ export default function ExpenseList({ refreshTrigger, month, year, onDeleteSucce
     };
 
     fetchExpenses();
-  }, [refreshTrigger, month, year]);
+  }, [refreshTrigger, month, year, startDay]);
 
   // Hành động 1: Mở Pop-up chứ không xoá liền
   const requestDelete = (item) => {
@@ -122,7 +122,16 @@ export default function ExpenseList({ refreshTrigger, month, year, onDeleteSucce
                       }`}>
                       {item.type === 'INCOME' ? '+' : '-'}{formatCurrency(item.amount)}
                     </td>
-                    <td className="p-4 text-center items-center justify-center">
+                    <td className="p-4 text-center items-center justify-center flex gap-1">
+                      <button 
+                        onClick={() => { if(onEditRequest) onEditRequest(item); }}
+                        className="text-slate-300 hover:text-amber-500 hover:bg-amber-50 transition-all p-2 rounded-full opacity-0 group-hover:opacity-100"
+                        title="Sửa hoá đơn này"
+                      >
+                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 mx-auto">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                         </svg>
+                      </button>
                       <button 
                         onClick={() => requestDelete(item)} // Gọi State Modal thay vì Browser Alert
                         className="text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-all p-2 rounded-full opacity-0 group-hover:opacity-100"

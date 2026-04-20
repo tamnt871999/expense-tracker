@@ -96,7 +96,8 @@ public class BudgetService {
         }
 
         BigDecimal limitAmount = budgetOpt.get().getLimitAmount();
-        BigDecimal totalSpent = expenseRepository.sumExpenseByCategoryAndMonthAndYear(category, month, year);
+        LocalDate[] cycle = ExpenseService.calculateBillingCycle(year, month, 1); // Tránh lỗi biên dịch (Fallback StartDay = 1)
+        BigDecimal totalSpent = expenseRepository.sumExpenseByCategoryAndDateBetween(category, cycle[0], cycle[1]);
 
         if (totalSpent == null) {
             totalSpent = BigDecimal.ZERO;
@@ -110,7 +111,8 @@ public class BudgetService {
 
     // --- NEW ---
     // Gom tất thảy những ngân sách lẻ tẻ có rớt chữ Category vào thành 1 mảng DTO chung
-    public List<CategoryBudgetSummaryDTO> getAllCategoryBudgetsSummary(int month, int year) {
+    public List<CategoryBudgetSummaryDTO> getAllCategoryBudgetsSummary(int month, int year, int startDay) {
+        LocalDate[] cycle = ExpenseService.calculateBillingCycle(year, month, startDay);
         List<Budget> budgets = budgetRepository.findAllByMonthAndYearAndCategoryIsNotNull(month, year);
         
         // Thuật toán Auto-Clone: Tìm copy dữ liệu từ tháng trước nếu tháng này rỗng
@@ -135,8 +137,8 @@ public class BudgetService {
             String category = budget.getCategory();
             BigDecimal limitAmount = budget.getLimitAmount();
             
-            // Query Tổng tiền đã vung tay của Danh mục này
-            BigDecimal totalSpent = expenseRepository.sumExpenseByCategoryAndMonthAndYear(category, month, year);
+            // Query Tổng tiền đã vung tay của Danh mục này dựa trên Chu Kỳ Cá Nhân thực tế
+            BigDecimal totalSpent = expenseRepository.sumExpenseByCategoryAndDateBetween(category, cycle[0], cycle[1]);
             if (totalSpent == null) totalSpent = BigDecimal.ZERO;
             
             BigDecimal remaining = limitAmount.subtract(totalSpent);

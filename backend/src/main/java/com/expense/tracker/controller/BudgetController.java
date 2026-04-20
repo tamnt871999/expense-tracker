@@ -86,11 +86,12 @@ public class BudgetController {
     }
 
     @GetMapping("/categories")
-    public ResponseEntity<ApiResponse<List<CategoryBudgetSummaryDTO>>> getAllCategoryBudgets(
+    public ResponseEntity<ApiResponse<List<CategoryBudgetSummaryDTO>>> getCategoryBudgetsSummary(
             @RequestParam("month") int month,
-            @RequestParam("year") int year) {
+            @RequestParam("year") int year,
+            @RequestParam(value = "startDay", defaultValue = "1") int startDay) {
             
-        List<CategoryBudgetSummaryDTO> list = budgetService.getAllCategoryBudgetsSummary(month, year);
+        List<CategoryBudgetSummaryDTO> list = budgetService.getAllCategoryBudgetsSummary(month, year, startDay);
         return ResponseEntity.ok(new ApiResponse<>(true, list, "success"));
     }
 

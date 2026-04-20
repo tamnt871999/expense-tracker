@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ConfirmModal from './ConfirmModal';
 
-export default function CategoryBudgetsList({ month, year, refreshTrigger, onBudgetCreated }) {
+export default function CategoryBudgetsList({ month, year, startDay, refreshTrigger, onBudgetCreated }) {
   const [categoryBudgets, setCategoryBudgets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -18,7 +18,7 @@ export default function CategoryBudgetsList({ month, year, refreshTrigger, onBud
   useEffect(() => {
     const fetchCategoryBudgets = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/budgets/categories?month=${month}&year=${year}`);
+        const response = await fetch(`http://localhost:8080/budgets/categories?month=${month}&year=${year}&startDay=${startDay}`);
         const result = await response.json();
         
         if (result.success) {
@@ -31,7 +31,7 @@ export default function CategoryBudgetsList({ month, year, refreshTrigger, onBud
       }
     };
     fetchCategoryBudgets();
-  }, [month, year, refreshTrigger]);
+  }, [month, year, startDay, refreshTrigger]);
 
   const handleCreateBudget = async (e) => {
     e.preventDefault();

@@ -36,11 +36,11 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
             @Param("endDate") LocalDate endDate
     );
 
-    // 4. Lấy danh sách giao dịch theo Tháng và Năm (sắp xếp mới nhất lên đầu)
-    @Query("SELECT e FROM Expense e WHERE MONTH(e.date) = :month AND YEAR(e.date) = :year ORDER BY e.date DESC")
-    List<Expense> findByMonthAndYear(@Param("month") int month, @Param("year") int year);
+    // 4. Lấy danh sách giao dịch theo Khoảng Thời Gian (sắp xếp mới nhất lên đầu)
+    @Query("SELECT e FROM Expense e WHERE e.date BETWEEN :startDate AND :endDate ORDER BY e.date DESC")
+    List<Expense> findByDateBetweenSorted(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
-    // 5. Tính tổng chi tiêu (EXPENSE) theo Danh mục, Tháng và Năm
-    @Query("SELECT COALESCE(SUM(e.amount), 0) FROM Expense e WHERE e.type = com.expense.tracker.entity.ExpenseType.EXPENSE AND e.category = :category AND MONTH(e.date) = :month AND YEAR(e.date) = :year")
-    BigDecimal sumExpenseByCategoryAndMonthAndYear(@Param("category") String category, @Param("month") int month, @Param("year") int year);
+    // 5. Tính tổng chi tiêu (EXPENSE) theo Danh mục trong chu kỳ giới hạn
+    @Query("SELECT COALESCE(SUM(e.amount), 0) FROM Expense e WHERE e.type = com.expense.tracker.entity.ExpenseType.EXPENSE AND e.category = :category AND e.date BETWEEN :startDate AND :endDate")
+    BigDecimal sumExpenseByCategoryAndDateBetween(@Param("category") String category, @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }

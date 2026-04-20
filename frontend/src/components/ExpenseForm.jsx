@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
-export default function ExpenseForm({ onSuccess }) {
+export default function ExpenseForm({ onSuccess, editingExpense, onCancelEdit }) {
   const [formData, setFormData] = useState({
+    id: null,
     type: 'EXPENSE',
     amount: '',
     category: '',
@@ -11,6 +12,24 @@ export default function ExpenseForm({ onSuccess }) {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Lắng nghe sự biến đổi của editingExpense từ ngoài App truyền vào
+  React.useEffect(() => {
+    if (editingExpense) {
+      setFormData({
+        id: editingExpense.id,
+        type: editingExpense.type || 'EXPENSE',
+        amount: editingExpense.amount || '',
+        category: editingExpense.category || '',
+        date: editingExpense.date ? editingExpense.date.substring(0, 10) : '',
+        note: editingExpense.note || ''
+      });
+      // Tự động kéo chuột lên để người dùng thấy cái Form
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      setFormData({ id: null, type: 'EXPENSE', amount: '', category: '', date: '', note: '' });
+    }
+  }, [editingExpense]);
 
   const handleChange = (e) => {
     setFormData({...formData, [e.target.name]: e.target.value});
@@ -48,7 +67,7 @@ export default function ExpenseForm({ onSuccess }) {
       
       if (response.ok && result.success) {
         // 3. Reset Form Trống về vạch xuất phát
-        setFormData({ type: 'EXPENSE', amount: '', category: '', date: '', note: '' });
+        setFormData({ id: null, type: 'EXPENSE', amount: '', category: '', date: '', note: '' });
         
         // 4. Bắn tín hiệu "onSuccess" để Component Cha báo cho các Box khác Reload lấy dữ liệu mới
         if (onSuccess) {
@@ -66,8 +85,17 @@ export default function ExpenseForm({ onSuccess }) {
   }
 
   return (
-    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-      <h2 className="text-xl font-bold text-slate-800 mb-6">Thêm Giao Dịch</h2>
+    <div className={`p-6 rounded-2xl shadow-sm border transition-colors ${editingExpense ? 'bg-amber-50/30 border-amber-200' : 'bg-white border-slate-100'}`}>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className={`text-xl font-bold ${editingExpense ? 'text-amber-600' : 'text-slate-800'}`}>
+          {editingExpense ? 'Cập Nhật Giao Dịch' : 'Thêm Giao Dịch'}
+        </h2>
+        {editingExpense && (
+          <button type="button" onClick={onCancelEdit} className="text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-200/50 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors">
+             ✖ Huỷ Ghi Đè
+          </button>
+        )}
+      </div>
       
       {/* Hiển thị lỗi đỏ nếu Validation rớt */}
       {errorMsg && (
@@ -153,9 +181,11 @@ export default function ExpenseForm({ onSuccess }) {
           className={`w-full font-bold py-3 text-sm rounded-xl transition-all mt-2 
             ${isSubmitting 
               ? 'bg-slate-300 text-slate-500 cursor-not-allowed' 
-              : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30'}`}
+              : editingExpense 
+                ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/30'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/30'}`}
         >
-          {isSubmitting ? 'ĐANG LƯU DỮ LIỆU...' : 'LƯU GIAO DỊCH'}
+          {isSubmitting ? 'ĐANG LƯU DỮ LIỆU...' : (editingExpense ? 'LƯU THAY ĐỔI' : 'LƯU GIAO DỊCH')}
         </button>
       </form>
     </div>

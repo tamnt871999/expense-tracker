@@ -4,10 +4,12 @@ import ExpenseForm from './components/ExpenseForm';
 import ExpenseList from './components/ExpenseList';
 import CustomDropdown from './components/CustomDropdown';
 import CategoryBudgetsList from './components/CategoryBudgetsList';
+
 function App() {
-  const currentDate = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [startDay, setStartDay] = useState(1);
+  const [editingExpense, setEditingExpense] = useState(null);
 
   const [summaryData, setSummaryData] = useState({ income: 0, expense: 0, balance: 0 });
   const [isLoadingSummary, setIsLoadingSummary] = useState(true);
@@ -19,7 +21,7 @@ function App() {
       try {
         setIsLoadingSummary(true);
         // Gọi API Backend Spring Boot
-        const response = await fetch(`http://localhost:8080/expenses/summary?month=${selectedMonth}&year=${selectedYear}`);
+        const response = await fetch(`http://localhost:8080/expenses/summary?month=${selectedMonth}&year=${selectedYear}&startDay=${startDay}`);
         const result = await response.json();
         
         if (result.success) {
@@ -37,7 +39,7 @@ function App() {
     };
 
     fetchSummary();
-  }, [refreshTrigger, selectedMonth, selectedYear]); // Kích hoạt lại Effect này bất cứ khi nào CẦN TẢI LẠI hoặc người dùng TÙY CHỈNH THÁNG NĂM
+  }, [refreshTrigger, selectedMonth, selectedYear, startDay]); // Kích hoạt lại Effect này bất cứ khi nào CẦN TẢI LẠI hoặc người dùng TÙY CHỈNH THÁNG NĂM
 
   // Options sinh động cho Dropdown mới
   const monthOptions = [...Array(12)].map((_, i) => ({ value: i + 1, label: `Tháng ${i + 1}` }));
@@ -54,7 +56,11 @@ function App() {
             <h1 className="text-lg sm:text-xl font-bold tracking-tight">Trình Quản Lý Chi Tiêu</h1>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center gap-4 mt-4 sm:mt-0">
+            <div className="flex items-center bg-white/10 rounded-xl shadow-inner border border-white/20 p-1">
+               <label className="px-3 text-sm font-semibold text-indigo-100 border-r border-white/20">Chu kỳ từ ngày:</label>
+               <input type="number" min="1" max="28" value={startDay} onChange={(e) => setStartDay(e.target.value)} className="w-16 px-2 py-1 bg-transparent text-white font-bold outline-none text-center placeholder-indigo-300" />
+            </div>
             <CustomDropdown 
               options={monthOptions}
               value={selectedMonth}
@@ -86,6 +92,7 @@ function App() {
           <CategoryBudgetsList 
             month={selectedMonth}
             year={selectedYear}
+            startDay={startDay}
             refreshTrigger={refreshTrigger}
             onBudgetCreated={() => setRefreshTrigger(prev => prev + 1)}
           />
@@ -93,15 +100,24 @@ function App() {
 
         {/* Content Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          <div className="lg:col-span-1 lg:sticky lg:top-24">
-            <ExpenseForm onSuccess={() => setRefreshTrigger(prev => prev + 1)} />
+          <div className="lg:col-span-1 border-r border-slate-100 pr-0 lg:pr-8">
+            <ExpenseForm 
+               onSuccess={() => {
+                  setRefreshTrigger(prev => prev + 1);
+                  setEditingExpense(null);
+               }} 
+               editingExpense={editingExpense}
+               onCancelEdit={() => setEditingExpense(null)}
+            />
           </div>
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-8">
             <ExpenseList 
               refreshTrigger={refreshTrigger}
               month={selectedMonth}
               year={selectedYear}
+              startDay={startDay}
               onDeleteSuccess={() => setRefreshTrigger(prev => prev + 1)}
+              onEdit={(expense) => setEditingExpense(expense)}
             />
           </div>
         </div>

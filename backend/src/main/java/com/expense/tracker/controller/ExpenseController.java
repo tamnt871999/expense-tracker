@@ -48,18 +48,20 @@ public class ExpenseController {
     @GetMapping("/summary")
     public ResponseEntity<ApiResponse<ExpenseSummaryDTO>> getExpenseSummary(
             @RequestParam("month") int month,
-            @RequestParam("year") int year) {
+            @RequestParam("year") int year,
+            @RequestParam(value = "startDay", defaultValue = "1") int startDay) {
             
-        ExpenseSummaryDTO summary = expenseService.getSummaryByMonth(year, month);
+        ExpenseSummaryDTO summary = expenseService.getSummaryByMonth(year, month, startDay);
         return ResponseEntity.ok(new ApiResponse<>(true, summary, "success"));
     }
 
     @GetMapping("/filter")
     public ResponseEntity<ApiResponse<List<Expense>>> getExpensesByMonth(
             @RequestParam("month") int month,
-            @RequestParam("year") int year) {
+            @RequestParam("year") int year,
+            @RequestParam(value = "startDay", defaultValue = "1") int startDay) {
             
-        List<Expense> expenses = expenseService.getExpensesByMonth(month, year);
+        List<Expense> expenses = expenseService.getExpensesByMonth(month, year, startDay);
         return ResponseEntity.ok(new ApiResponse<>(true, expenses, "success"));
     }
 

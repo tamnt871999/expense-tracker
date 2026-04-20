@@ -40,8 +40,9 @@ public class ExpenseService {
         return expenseRepository.findAll();
     }
 
-    public List<Expense> getExpensesByMonth(int month, int year) {
-        List<Expense> expenses = expenseRepository.findByMonthAndYear(month, year);
+    public List<Expense> getExpensesByMonth(int month, int year, int startDay) {
+        LocalDate[] cycle = calculateBillingCycle(year, month, startDay);
+        List<Expense> expenses = expenseRepository.findByDateBetweenSorted(cycle[0], cycle[1]);
         
         // Xử lý an toàn: Tránh trả về null dễ gây lỗi NullPointerException ở vòng lặp
         if (expenses == null) {
@@ -63,14 +64,25 @@ public class ExpenseService {
         return calculateSummary(date, date);
     }
 
-    // Lấy thống kê theo cả tháng
-    public ExpenseSummaryDTO getSummaryByMonth(int year, int month) {
-        // YearMonth là class cực hay của Java 8+ giúp dễ dàng tìm ngày đầu/cuối của bất kỳ tháng nào
-        YearMonth yearMonth = YearMonth.of(year, month);
-        LocalDate startDate = yearMonth.atDay(1);
-        LocalDate endDate = yearMonth.atEndOfMonth();
-        
-        return calculateSummary(startDate, endDate);
+    // Lấy thống kê theo cả tháng (Có tịnh tiến thời gian nhận lương)
+    public ExpenseSummaryDTO getSummaryByMonth(int year, int month, int startDay) {
+        LocalDate[] cycle = calculateBillingCycle(year, month, startDay);
+        return calculateSummary(cycle[0], cycle[1]);
+    }
+
+    // --- Thuật toán Lõi: Giải bài toán Chu Kỳ Cá Nhân ---
+    public static LocalDate[] calculateBillingCycle(int year, int month, int startDay) {
+        if (startDay <= 1) {
+            YearMonth yearMonth = YearMonth.of(year, month);
+            return new LocalDate[] { yearMonth.atDay(1), yearMonth.atEndOfMonth() };
+        } else {
+            // Ví dụ Lương vào ngày 20, Thì Tháng 4 = Từ 20/04 đến 19/05
+            int currentMaxDays = YearMonth.of(year, month).lengthOfMonth();
+            int safeStartDay = Math.min(startDay, currentMaxDays);
+            LocalDate startDate = LocalDate.of(year, month, safeStartDay);
+            LocalDate endDate = startDate.plusMonths(1).minusDays(1);
+            return new LocalDate[] { startDate, endDate };
+        }
     }
 
     // Hàm private dùng chung để tính toán (tránh lặp lại code)
